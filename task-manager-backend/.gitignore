@@ -1,0 +1,6 @@
+application-local.properties
+target/
+*.class
+.classpath
+.project
+.settings/
