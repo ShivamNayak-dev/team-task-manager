@@ -14,6 +14,14 @@ function PriorityBadge({ priority }) {
   return <span className={`badge ${map[priority] || ''}`}>{priority}</span>
 }
 
+const statCards = [
+  { key: 'totalProjects', label: 'Total Projects', color: 'purple', icon: '📁' },
+  { key: 'totalTasks', label: 'Total Tasks', color: 'blue', icon: '✅' },
+  { key: 'inProgressTasks', label: 'In Progress', color: 'yellow', icon: '⚡' },
+  { key: 'completedTasks', label: 'Completed', color: 'green', icon: '🎯' },
+  { key: 'overdueTasks', label: 'Overdue', color: 'red', icon: '⚠️' },
+]
+
 export default function Dashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,62 +31,77 @@ export default function Dashboard() {
     getDashboard().then(r => setData(r.data)).catch(console.error).finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="loading"><span className="spinner"></span> Loading dashboard...</div>
+  if (loading) return (
+    <div className="loading">
+      <span className="spinner"></span> Loading dashboard...
+    </div>
+  )
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="page-container page-enter">
-      <div className="page-header">
-        <h1 className="page-title">Good day, {user?.name?.split(' ')[0]} 👋</h1>
-        <p className="page-subtitle">Here's what's happening with your projects today</p>
+
+      {/* Header */}
+      <div className="dash-header">
+        <div>
+          <h1 className="page-title">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
+          <p className="page-subtitle">Here's what's happening with your projects today</p>
+        </div>
+        <div className="dash-date">
+          {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </div>
       </div>
 
+      {/* Stat Cards */}
       <div className="stats-grid">
-        <div className="stat-card purple">
-          <div className="stat-label">Total Projects</div>
-          <div className="stat-value">{data?.totalProjects ?? 0}</div>
-        </div>
-        <div className="stat-card blue">
-          <div className="stat-label">Total Tasks</div>
-          <div className="stat-value">{data?.totalTasks ?? 0}</div>
-        </div>
-        <div className="stat-card yellow">
-          <div className="stat-label">In Progress</div>
-          <div className="stat-value">{data?.inProgressTasks ?? 0}</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">Completed</div>
-          <div className="stat-value">{data?.completedTasks ?? 0}</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-label">Overdue</div>
-          <div className="stat-value">{data?.overdueTasks ?? 0}</div>
-        </div>
+        {statCards.map(({ key, label, color, icon }) => (
+          <div key={key} className={`stat-card ${color}`}>
+            <div className="stat-icon">{icon}</div>
+            <div className="stat-label">{label}</div>
+            <div className="stat-value">{data?.[key] ?? 0}</div>
+            <div className="stat-bar">
+              <div className="stat-bar-fill" style={{ width: `${Math.min(((data?.[key] ?? 0) / Math.max(data?.totalTasks ?? 1, 1)) * 100, 100)}%` }} />
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="two-col" style={{marginBottom: 24}}>
+      {/* Two column section */}
+      <div className="two-col" style={{ marginBottom: 24 }}>
+
         {/* Recent Tasks */}
         <div className="card">
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-            <div className="card-title" style={{margin:0}}>Recent Tasks</div>
-            <Link to="/tasks" className="btn btn-secondary btn-sm">View all</Link>
+          <div className="card-header-row">
+            <div className="card-title-group">
+              <span className="card-title-icon">📋</span>
+              <div className="card-title" style={{ margin: 0 }}>Recent Tasks</div>
+            </div>
+            <Link to="/tasks" className="btn btn-secondary btn-sm">View all →</Link>
           </div>
-          {data?.myRecentTasks?.length === 0 ? (
-            <div className="empty-state" style={{padding:'30px 0'}}>
+
+          {!data?.myRecentTasks?.length ? (
+            <div className="empty-state" style={{ padding: '30px 0' }}>
               <div className="empty-icon">📋</div>
               <div className="empty-text">No tasks assigned yet</div>
             </div>
           ) : (
-            <div style={{display:'flex', flexDirection:'column', gap:10}}>
-              {data?.myRecentTasks?.map(task => (
-                <div key={task.id} style={{padding:'12px 14px', background:'var(--bg3)', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)'}}>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6}}>
-                    <span style={{fontWeight:600, fontSize:14, color:'var(--text)'}}>{task.title}</span>
+            <div className="task-list">
+              {data.myRecentTasks.map(task => (
+                <div key={task.id} className="task-item">
+                  <div className="task-item-top">
+                    <span className="task-item-title">{task.title}</span>
                     <StatusBadge status={task.overdue ? 'OVERDUE' : task.status} />
                   </div>
-                  <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                  <div className="task-item-meta">
                     <PriorityBadge priority={task.priority} />
-                    <span style={{fontSize:12, color:'var(--text3)'}}>{task.projectName}</span>
-                    {task.dueDate && <span style={{fontSize:12, color:'var(--text3)', marginLeft:'auto'}}>Due {task.dueDate}</span>}
+                    <span className="task-project-name">📁 {task.projectName}</span>
+                    {task.dueDate && (
+                      <span className="task-due" style={{ marginLeft: 'auto' }}>
+                        🗓 {task.dueDate}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -88,32 +111,39 @@ export default function Dashboard() {
 
         {/* My Projects */}
         <div className="card">
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-            <div className="card-title" style={{margin:0}}>My Projects</div>
-            <Link to="/projects" className="btn btn-secondary btn-sm">View all</Link>
+          <div className="card-header-row">
+            <div className="card-title-group">
+              <span className="card-title-icon">🗂</span>
+              <div className="card-title" style={{ margin: 0 }}>My Projects</div>
+            </div>
+            <Link to="/projects" className="btn btn-secondary btn-sm">View all →</Link>
           </div>
-          {data?.myProjects?.length === 0 ? (
-            <div className="empty-state" style={{padding:'30px 0'}}>
+
+          {!data?.myProjects?.length ? (
+            <div className="empty-state" style={{ padding: '30px 0' }}>
               <div className="empty-icon">📁</div>
               <div className="empty-text">No projects yet</div>
             </div>
           ) : (
-            <div style={{display:'flex', flexDirection:'column', gap:10}}>
-              {data?.myProjects?.map(project => {
-                const pct = project.totalTasks > 0 ? Math.round((project.completedTasks / project.totalTasks) * 100) : 0
+            <div className="task-list">
+              {data.myProjects.map(project => {
+                const pct = project.totalTasks > 0
+                  ? Math.round((project.completedTasks / project.totalTasks) * 100)
+                  : 0
                 return (
-                  <Link to={`/projects/${project.id}`} key={project.id} style={{textDecoration:'none'}}>
-                    <div style={{padding:'12px 14px', background:'var(--bg3)', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)', transition:'border-color 0.15s'}}
-                         onMouseEnter={e => e.currentTarget.style.borderColor='var(--accent)'}
-                         onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
-                      <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
-                        <span style={{fontWeight:600, fontSize:14, color:'var(--text)'}}>{project.name}</span>
-                        <span style={{fontSize:12, color:'var(--text3)'}}>{project.completedTasks}/{project.totalTasks} tasks</span>
+                  <Link to={`/projects/${project.id}`} key={project.id} style={{ textDecoration: 'none' }}>
+                    <div className="project-dash-item">
+                      <div className="project-dash-top">
+                        <span className="task-item-title">{project.name}</span>
+                        <span className="project-pct-badge">{pct}%</span>
                       </div>
-                      <div className="project-progress">
-                        <div className="project-progress-bar" style={{width:`${pct}%`}}></div>
+                      <div className="project-progress" style={{ margin: '8px 0 4px' }}>
+                        <div className="project-progress-bar" style={{ width: `${pct}%` }} />
                       </div>
-                      <span style={{fontSize:12, color:'var(--accent2)'}}>{pct}% complete</span>
+                      <div className="project-dash-meta">
+                        <span>{project.completedTasks}/{project.totalTasks} tasks done</span>
+                        <span>{project.members?.length ?? 0} members</span>
+                      </div>
                     </div>
                   </Link>
                 )
@@ -121,6 +151,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
       </div>
     </div>
   )
