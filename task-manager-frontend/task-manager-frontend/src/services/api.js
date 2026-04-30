@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'https://team-task-manager-production-9bcf.up.railway.app'
 
 const api = axios.create({ baseURL: BASE_URL })
 
