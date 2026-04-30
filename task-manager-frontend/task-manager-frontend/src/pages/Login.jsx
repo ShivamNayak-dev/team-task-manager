@@ -62,7 +62,7 @@ export default function Login() {
           fontFamily: "'Outfit', sans-serif",
           letterSpacing: '-0.5px'
         }}>
-          🚀 Flow<span style={{ color: '#0ea5e9' }}>Board</span>
+          Task Flow<span style={{ color: '#0ea5e9' }}>Board</span>
         </div>
 
         <h1 style={{
